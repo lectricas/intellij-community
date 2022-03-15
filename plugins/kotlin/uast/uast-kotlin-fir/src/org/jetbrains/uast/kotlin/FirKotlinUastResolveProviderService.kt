@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
+import org.jetbrains.kotlin.analysis.api.fir.psiForUast
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSamConstructorSymbol
@@ -283,7 +284,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             else -> null
         } ?: return null
 
-        val resolvedTargetElement = resolvedTargetSymbol.psi
+        val resolvedTargetElement = resolvedTargetSymbol.psiForUast
 
         // Shortcut: if the resolution target is compiled class/member, package info, or pure Java declarations,
         //   we can return it early here (to avoid expensive follow-up steps: module retrieval and light element conversion).
@@ -294,7 +295,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             return resolvedTargetElement
         }
 
-        val ktModule = (resolvedTargetElement as? KtDeclaration)?.getKtModule()
+        val ktModule = (resolvedTargetElement as? KtDeclaration)?.getKtModule(ktExpression.project)
         when (ktModule) {
             is KtSourceModule -> {
                 // `getMaybeLightElement` tries light element conversion first, and then something else for local declarations.

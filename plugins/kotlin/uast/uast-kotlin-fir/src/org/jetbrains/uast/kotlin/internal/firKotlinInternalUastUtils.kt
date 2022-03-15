@@ -5,6 +5,7 @@ package org.jetbrains.uast.kotlin.internal
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.fir.psiForUast
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
@@ -55,7 +56,7 @@ internal fun KtAnalysisSession.toPsiClass(
 }
 
 internal fun KtAnalysisSession.toPsiMethod(functionSymbol: KtFunctionLikeSymbol): PsiMethod? {
-    return when (val psi = functionSymbol.psi) {
+    return when (val psi = functionSymbol.psiForUast) {
         null -> null
         is PsiMethod -> psi
         is KtClassOrObject -> {
