@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.debugger.streams.action;
+package com.intellij.debugger.streams.sandbox;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -10,6 +10,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.memory.action.DebuggerTreeAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.*;
@@ -25,6 +26,8 @@ public class SaveVariableAction extends DebuggerTreeAction {
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
     DebugProcessImpl debugProcess = JavaDebugProcess.getCurrentDebugProcess(e);
+    SaveVariableService saveVariableService =
+      ApplicationManager.getApplication().getService(SaveVariableService.class);
     debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
       @Override
       protected void action() {
@@ -36,7 +39,10 @@ public class SaveVariableAction extends DebuggerTreeAction {
             .findFirst();
           Value v = frame.getValue(selectedVariableOpt.orElseThrow());
           JsonElement elem = toJsonElement(v);
-          LOG.info(elem.toString());
+          saveVariableService.saveVariable(elem);
+          for (JsonElement jsonElem : saveVariableService.getVariable()) {
+            LOG.info(jsonElem.toString());
+          }
         }
         catch (EvaluateException | AbsentInformationException ex) {
           LOG.info(ex);

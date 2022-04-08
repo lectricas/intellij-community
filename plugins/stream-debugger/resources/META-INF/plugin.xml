@@ -42,6 +42,10 @@
     <librarySupport implementation="com.intellij.debugger.streams.lib.impl.JBIterableSupportProvider"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.debugger.streams.sandbox.SaveVariableService"/>
+  </extensions>
+
   <actions>
     <action id="StreamTracerAction"
             class="com.intellij.debugger.streams.action.TraceStreamAction"
@@ -51,7 +55,7 @@
     </action>
 
     <action id="SaveVariable"
-            class="com.intellij.debugger.streams.action.SaveVariableAction"
+            class="com.intellij.debugger.streams.sandbox.SaveVariableAction"
             icon="AllIcons.Actions.MenuSaveall">
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="after" relative-to-action="StreamTracerAction"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
