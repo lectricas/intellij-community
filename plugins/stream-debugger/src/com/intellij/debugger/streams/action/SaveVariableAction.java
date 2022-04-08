@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.action;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -13,6 +16,7 @@ import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Optional;
 
 public class SaveVariableAction extends DebuggerTreeAction {
 
@@ -26,11 +30,13 @@ public class SaveVariableAction extends DebuggerTreeAction {
       protected void action() {
         try {
           StackFrame frame = debugProcess.getDebuggerContext().getFrameProxy().getStackFrame();
-          List<LocalVariable> variables = frame.visibleVariables();
-          for (LocalVariable lv : variables) {
-            Value v = frame.getValue(lv);
-            calculate(v);
-          }
+          Optional<LocalVariable> selectedVariableOpt = frame.visibleVariables()
+            .stream()
+            .filter(variable -> variable.name().equals(nodeName))
+            .findFirst();
+          Value v = frame.getValue(selectedVariableOpt.orElseThrow());
+          JsonElement elem = toJsonElement(v);
+          LOG.info(elem.toString());
         }
         catch (EvaluateException | AbsentInformationException ex) {
           LOG.info(ex);
@@ -39,18 +45,21 @@ public class SaveVariableAction extends DebuggerTreeAction {
     });
   }
 
-  private void calculate(Value value) {
+  private static JsonElement toJsonElement(Value value) {
+    JsonObject object = new JsonObject();
     if (value instanceof StringReference) {
-      LOG.info(((StringReference)value).value());
+      return new JsonPrimitive(((StringReference)value).value());
     }
     else if (value instanceof ObjectReference) {
       List<Field> fileds = ((ObjectReference)value).referenceType().allFields();
       for (Field f : fileds) {
-        calculate(((ObjectReference)value).getValue(f));
+        JsonElement elem = toJsonElement(((ObjectReference)value).getValue(f));
+        object.add(f.name(), elem);
       }
+      return object;
     }
     else {
-      LOG.info(value.toString());
+      return new JsonPrimitive(value.toString());
     }
   }
 }
