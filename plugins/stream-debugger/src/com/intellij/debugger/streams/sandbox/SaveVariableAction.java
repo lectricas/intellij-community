@@ -6,18 +6,28 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaDebugProcess;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.memory.action.DebuggerTreeAction;
+import com.intellij.debugger.streams.sandbox.dto.SElement;
+import com.intellij.debugger.streams.sandbox.dto.SObject;
+import com.intellij.debugger.streams.sandbox.dto.SPrimitive;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.xdebugger.impl.ui.tree.XInspectDialog;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import com.sun.jdi.*;
+import com.sun.jdi.Field;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.StringReference;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Optional;
 
 public class SaveVariableAction extends DebuggerTreeAction {
 
@@ -26,27 +36,37 @@ public class SaveVariableAction extends DebuggerTreeAction {
   @Override
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
     DebugProcessImpl debugProcess = JavaDebugProcess.getCurrentDebugProcess(e);
-    SaveVariableService saveVariableService =
-      ApplicationManager.getApplication().getService(SaveVariableService.class);
+    SaveVariableService saveVariableService = ApplicationManager.getApplication().getService(SaveVariableService.class);
+    var session = debugProcess.getSession().getXDebugSession();
+    final XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
     debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+
+
       @Override
       protected void action() {
-        try {
-          StackFrame frame = debugProcess.getDebuggerContext().getFrameProxy().getStackFrame();
-          Optional<LocalVariable> selectedVariableOpt = frame.visibleVariables()
-            .stream()
-            .filter(variable -> variable.name().equals(nodeName))
-            .findFirst();
-          Value v = frame.getValue(selectedVariableOpt.orElseThrow());
-          JsonElement elem = toJsonElement(v);
-          saveVariableService.saveVariable(elem);
-          for (JsonElement jsonElem : saveVariableService.getVariable()) {
-            LOG.info(jsonElem.toString());
-          }
-        }
-        catch (EvaluateException | AbsentInformationException ex) {
-          LOG.info(ex);
-        }
+          XValue xValue = node.getValueContainer();
+          ValueDescriptorImpl valueDescriptor = ((JavaValue)xValue).getDescriptor();
+          Value v = valueDescriptor.getValue();
+          SElement current = toElement(v, nodeName);
+          SElement saved = saveVariableService.getVariable();
+          saveVariableService.saveVariable(current);
+
+          ApplicationManager.getApplication().invokeLater(() -> {
+
+            XInspectDialog dialog = new XInspectDialog(
+              session.getProject(),
+              editorsProvider,
+              null,
+              nodeName,
+              current,
+              null,
+              DebuggerUIUtil.getSession(e),
+              true
+            );
+            dialog.show();
+          });
+
+          LOG.info(current.toString());
       }
     });
   }
@@ -68,4 +88,29 @@ public class SaveVariableAction extends DebuggerTreeAction {
       return new JsonPrimitive(value.toString());
     }
   }
+
+  private static SElement toElement(Value value, String name) {
+    if (value instanceof StringReference) {
+      return new SPrimitive(((StringReference)value).value(), value.type(), name);
+    }
+    else if (value instanceof ObjectReference) {
+      SObject o = new SObject(value.type(), name);
+      List<Field> fileds = ((ObjectReference)value).referenceType().allFields();
+      for (Field f : fileds) {
+        SElement elem = toElement(((ObjectReference)value).getValue(f), f.name());
+        o.fields.put(f.name(), elem);
+      }
+      return o;
+    }
+    else {
+      if (value == null) {
+        // TODO: 21.04.2022 check null for non initialized
+        throw new NullPointerException();
+      }
+      else {
+        return new SPrimitive(value.toString(), value.type(), name);
+      }
+    }
+  }
 }
+

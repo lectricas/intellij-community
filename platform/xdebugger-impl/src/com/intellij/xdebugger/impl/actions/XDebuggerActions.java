@@ -61,5 +61,5 @@ public interface XDebuggerActions {
   @NonNls String FOCUS_ON_BREAKPOINT = "Debugger.FocusOnBreakpoint";
   @NonNls String FOCUS_ON_FINISH = "Debugger.FocusOnFinish";
 
-  @NonNls String SAVE_VARIALBE = "SaveVariable";
+  @NonNls String SAVE_VARIALBE = "Debugger.SaveVariable";
 }

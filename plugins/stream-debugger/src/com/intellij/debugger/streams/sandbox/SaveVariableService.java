@@ -1,20 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.sandbox;
 
-import com.google.gson.JsonElement;
+import com.intellij.debugger.streams.sandbox.dto.SElement;
+import com.intellij.openapi.components.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+@Service
+public final class SaveVariableService {
 
-public class SaveVariableService {
+  private SElement variable = null;
 
-  private List<JsonElement> variables = new ArrayList<>();
-
-  public void saveVariable(JsonElement element) {
-    variables.add(element);
+  public void saveVariable(SElement element) {
+    this.variable = element;
   }
 
-  public List<JsonElement> getVariable() {
-    return variables;
+  public SElement getVariable() {
+    return variable;
   }
 }

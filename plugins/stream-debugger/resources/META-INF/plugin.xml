@@ -43,7 +43,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceImplementation="com.intellij.debugger.streams.sandbox.SaveVariableService"/>
+    <projectService serviceImplementation="com.intellij.debugger.streams.sandbox.SaveVariableService"/>
   </extensions>
 
   <actions>
