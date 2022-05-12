@@ -42,6 +42,10 @@
     <librarySupport implementation="com.intellij.debugger.streams.lib.impl.JBIterableSupportProvider"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="com.intellij.debugger.streams.sandbox.SaveVariableService"/>
+  </extensions>
+
   <actions>
     <action id="StreamTracerAction"
             class="com.intellij.debugger.streams.action.TraceStreamAction"

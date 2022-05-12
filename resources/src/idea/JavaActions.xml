@@ -565,6 +565,18 @@
                     relative-to-action="MemoryView.ShowInstancesFromDebuggerTree"/>
     </action>
 
+    <action id="Memory.SaveVariable"
+            class="com.intellij.debugger.streams.sandbox.SaveVariableAction">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
+                    relative-to-action="Memory.CalculateRetainedSize"/>
+    </action>
+
+    <action id="Memory.OpenSavedVariables"
+            class="com.intellij.debugger.streams.sandbox.OpenSavedVariablesAction">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
+                    relative-to-action="Memory.SaveVariable"/>
+    </action>
+
     <action class="com.intellij.debugger.memory.action.tracking.JumpToAllocationSourceAction"
             id="MemoryView.ShowAllocationStackTrace">
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
