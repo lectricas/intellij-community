@@ -18,8 +18,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.intellij.xdebugger.impl.ui.tree.XInspectDialog;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.Field;
 import com.sun.jdi.ObjectReference;
@@ -47,70 +45,11 @@ public class SaveVariableAction extends DebuggerTreeAction {
           XValue xValue = node.getValueContainer();
           ValueDescriptorImpl valueDescriptor = ((JavaValue)xValue).getDescriptor();
           Value v = valueDescriptor.getValue();
-          SElement current = toElement(v, nodeName);
-          SElement saved = saveVariableService.getVariable();
+          SElement current = Mappers.toElement(v, nodeName);
           saveVariableService.saveVariable(current);
-
-          ApplicationManager.getApplication().invokeLater(() -> {
-
-            XInspectDialog dialog = new XInspectDialog(
-              session.getProject(),
-              editorsProvider,
-              null,
-              nodeName,
-              current,
-              null,
-              DebuggerUIUtil.getSession(e),
-              true
-            );
-            dialog.show();
-          });
-
           LOG.info(current.toString());
       }
     });
-  }
-
-  private static JsonElement toJsonElement(Value value) {
-    JsonObject object = new JsonObject();
-    if (value instanceof StringReference) {
-      return new JsonPrimitive(((StringReference)value).value());
-    }
-    else if (value instanceof ObjectReference) {
-      List<Field> fileds = ((ObjectReference)value).referenceType().allFields();
-      for (Field f : fileds) {
-        JsonElement elem = toJsonElement(((ObjectReference)value).getValue(f));
-        object.add(f.name(), elem);
-      }
-      return object;
-    }
-    else {
-      return new JsonPrimitive(value.toString());
-    }
-  }
-
-  private static SElement toElement(Value value, String name) {
-    if (value instanceof StringReference) {
-      return new SPrimitive(((StringReference)value).value(), value.type(), name);
-    }
-    else if (value instanceof ObjectReference) {
-      SObject o = new SObject(value.type(), name);
-      List<Field> fileds = ((ObjectReference)value).referenceType().allFields();
-      for (Field f : fileds) {
-        SElement elem = toElement(((ObjectReference)value).getValue(f), f.name());
-        o.fields.put(f.name(), elem);
-      }
-      return o;
-    }
-    else {
-      if (value == null) {
-        // TODO: 21.04.2022 check null for non initialized
-        throw new NullPointerException();
-      }
-      else {
-        return new SPrimitive(value.toString(), value.type(), name);
-      }
-    }
   }
 }
 

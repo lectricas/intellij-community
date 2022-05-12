@@ -3,14 +3,15 @@ package com.intellij.debugger.streams.sandbox.dto;
 
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.XValuePlace;
+import com.intellij.xdebugger.frame.presentation.XKeywordValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.openapi.editor.colors.CodeInsightColors.ERRORS_ATTRIBUTES;
+import static com.intellij.openapi.editor.colors.CodeInsightColors.*;
 
 public class SPrimitive extends SElement {
-  String value;
+  public String value;
   Type type;
   String name;
 
@@ -26,12 +27,34 @@ public class SPrimitive extends SElement {
     return value + ":" + type.name();
   }
 
+
+
   @Override
   public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
-    var presentation = new XRegularValuePresentation(value, type.name(), ",") {
+    var presentation = new XKeywordValuePresentation(value) {
       @Override
       public void renderValue(@NotNull XValueTextRenderer renderer) {
-        renderer.renderValue(value, ERRORS_ATTRIBUTES);
+        System.out.println(whatChanged);
+        switch (whatChanged) {
+          case ADD:
+            renderer.renderValue(value, WEAK_WARNING_ATTRIBUTES);
+            break;
+          case REMOVE:
+            renderer.renderValue(value, DEPRECATED_ATTRIBUTES);
+            break;
+          case REPLACE:
+            renderer.renderValue(value, MARKED_FOR_REMOVAL_ATTRIBUTES);
+            break;
+          case MOVE:
+            renderer.renderValue(value, MARKED_FOR_REMOVAL_ATTRIBUTES);
+            break;
+          case COPY:
+            renderer.renderValue(value, MARKED_FOR_REMOVAL_ATTRIBUTES);
+            break;
+          case NOTHING:
+            renderer.renderValue(value);
+            break;
+        }
       }
     };
     node.setPresentation(null, presentation, false);

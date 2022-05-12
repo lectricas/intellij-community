@@ -4,16 +4,19 @@ package com.intellij.debugger.streams.sandbox;
 import com.intellij.debugger.streams.sandbox.dto.SElement;
 import com.intellij.openapi.components.Service;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Service
 public final class SaveVariableService {
 
-  private SElement variable = null;
+  private SElement currentVariable = null;
 
   public void saveVariable(SElement element) {
-    this.variable = element;
+    currentVariable = element;
   }
 
   public SElement getVariable() {
-    return variable;
+    return currentVariable;
   }
 }

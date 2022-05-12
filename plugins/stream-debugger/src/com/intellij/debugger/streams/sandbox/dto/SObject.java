@@ -8,6 +8,7 @@ import com.intellij.xdebugger.frame.XValuePlace;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
